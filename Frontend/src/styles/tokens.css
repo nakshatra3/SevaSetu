@@ -1,0 +1,33 @@
+/* Design tokens. Change colors/fonts here and the whole app follows. */
+:root {
+  --river-900: #0a2b31;
+  --river-700: #0e3b43;
+  --teal-600: #1b7f79;
+  --teal-700: #156863;
+  --teal-100: #d9eeec;
+  --marigold-500: #f2a93b;
+  --marigold-100: #fcebcb;
+  --marigold-800: #7a4d06;
+  --mist-50: #f4f7f6;
+  --mist-100: #e8efee;
+  --line: #d3dedc;
+  --ink: #16282b;
+  --ink-soft: #4a5e61;
+  --clay-600: #c8473d;
+  --clay-700: #a8342b;
+  --clay-100: #f9e1de;
+  --leaf-700: #2e7d4f;
+  --leaf-100: #ddf1e4;
+  --surface: #ffffff;
+
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
+  --shadow-pop: 0 12px 32px rgba(10, 43, 49, 0.22);
+
+  --topbar-h: 60px;
+  --sidebar-w: 232px;
+}

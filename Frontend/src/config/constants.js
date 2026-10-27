@@ -2,6 +2,7 @@ export const ROLES = {
   VOLUNTEER: "volunteer",
   ORGANIZATION: "organization",
   ADMIN: "admin",
+  INDIVIDUAL_ORGANIZER: "individual_organizer",
 };
 
 export const ROLE_LABELS = {
@@ -15,6 +16,7 @@ export const ROLE_HOME = {
   volunteer: "/app/volunteer/profile",
   organization: "/app/organization/profile",
   admin: "/app/admin",
+  individual_organizer: "/app/individual-organizer/profile",
 };
 
 export const VERIFICATION_STATUS = {

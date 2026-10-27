@@ -60,7 +60,8 @@ export default function RegisterPage() {
 
   return (
     <div className="auth__card">
-      <h1>Create your account</h1>
+      {/* <h1>Create your account</h1> */}
+      <h1>TEST - UPDATED REGISTRATION PAGE</h1>
       <p className="muted">Choose how you'll use SevaSetu.</p>
 
       <Alert type="error">{submitError}</Alert>
@@ -71,6 +72,7 @@ export default function RegisterPage() {
           {[
             { value: ROLES.VOLUNTEER, label: "I want to volunteer" },
             { value: ROLES.ORGANIZATION, label: "I represent an organization" },
+            { value: ROLES.INDIVIDUAL_ORGANIZER, label: "I want to organize an event" },
           ].map((opt) => (
             <label key={opt.value} className={form.role === opt.value ? "is-selected" : ""}>
               <input type="radio" name="role" value={opt.value} checked={form.role === opt.value} onChange={update("role")} />

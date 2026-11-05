@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from app.auth import require_role, get_optional_user
 from app.schemas import EventCreate
+from app.utils.geo import distance_km, has_location
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
@@ -81,9 +82,13 @@ async def list_events(
     category: str = "",
     city: str = "",
     include_past: bool = False,
+    lat: Optional[float] = Query(default=None, ge=-90, le=90),
+    lng: Optional[float] = Query(default=None, ge=-180, le=180),
+    radius_km: Optional[float] = Query(default=None, gt=0, le=500),
+    sort: str = Query(default="date", pattern="^(date|distance)$"),
     limit: int = Query(default=100, ge=1, le=200),
 ):
-    """List active events, with optional title/description/category/city filters."""
+    """List active events and optionally filter/sort them around a map location."""
     db = request.app.state.database
     query = {"status": "active"}
     if not include_past:
@@ -98,12 +103,56 @@ async def list_events(
             {"description": {"$regex": q.strip(), "$options": "i"}},
         ]
 
-    cursor = db.events.find(query).sort("start_time", 1).limit(limit)
-    events = await cursor.to_list(length=limit)
-    return [
+    # A location search needs both coordinates. Reject partial coordinates rather
+    # than silently returning results that look like a nearby search.
+    if (lat is None) != (lng is None):
+        raise HTTPException(
+            status_code=422,
+            detail="Provide both lat and lng for location-based discovery.",
+        )
+    if (lat is None and (radius_km is not None or sort == "distance")):
+        raise HTTPException(
+            status_code=422,
+            detail="Provide lat and lng when using radius_km or distance sorting.",
+        )
+
+    # When distance sorting/filtering is requested, fetch a wider candidate set
+    # before applying the geographic calculations in Python.
+    fetch_limit = 500 if lat is not None else limit
+    cursor = db.events.find(query).sort("start_time", 1).limit(fetch_limit)
+    events = await cursor.to_list(length=fetch_limit)
+
+    results = [
         _event_response(event, event.get("organization_name", ""))
         for event in events
     ]
+
+    if lat is not None and lng is not None:
+        for result in results:
+            result["distance_km"] = (
+                distance_km(lat, lng, result["latitude"], result["longitude"])
+                if has_location(result)
+                else None
+            )
+
+        if radius_km is not None:
+            results = [
+                result
+                for result in results
+                if result["distance_km"] is not None
+                and result["distance_km"] <= radius_km
+            ]
+
+        if sort == "distance":
+            results.sort(
+                key=lambda result: (
+                    result["distance_km"]
+                    if result["distance_km"] is not None
+                    else float("inf")
+                )
+            )
+
+    return results[:limit]
 
 
 @router.get("/{event_id}")

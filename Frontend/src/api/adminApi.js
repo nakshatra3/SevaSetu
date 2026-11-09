@@ -1,32 +1,28 @@
 import { http } from "./httpClient";
-import { env } from "@/config/env";
-import * as mock from "./mock/mockDb";
 
-export const getAdminStats = () =>
-  env.USE_MOCK_DATA ? mock.getAdminStats() : http.get("/admin/stats");
+// Every call here needs an admin account (the backend checks the role).
 
-export const listUsers = (params) =>
-  env.USE_MOCK_DATA ? mock.listUsers(params) : http.get("/admin/users", { params });
+export const getAdminStats = () => http.get("/admin/stats");
 
-export const setUserActive = (id, is_active) =>
-  env.USE_MOCK_DATA
-    ? mock.setUserActive(id, is_active)
-    : http.patch(`/admin/users/${id}`, { is_active });
+export const listUsers = (params) => http.get("/admin/users", { params });
+export const setUserActive = (id, is_active) => http.patch(`/admin/users/${id}`, { is_active });
 
-export const listOrganizations = (params) =>
-  env.USE_MOCK_DATA ? mock.listAdminOrganizations(params) : http.get("/admin/organizations", { params });
-
+export const listOrganizations = (params) => http.get("/admin/organizations", { params });
 // status: "verified" | "rejected"
 export const reviewOrganization = (id, status, note = "") =>
-  env.USE_MOCK_DATA
-    ? mock.reviewOrganization(id, status, note)
-    : http.patch(`/admin/organizations/${id}/verification`, { status, note });
+  http.patch(`/admin/organizations/${id}/verification`, { status, note });
 
-export const listReports = (params) =>
-  env.USE_MOCK_DATA ? mock.listReports(params) : http.get("/admin/reports", { params });
+export const listReports = (params) => http.get("/admin/reports", { params });
+
+
+
 
 // status: "resolved" | "dismissed"
+
 export const updateReport = (id, status, resolution_note = "") =>
-  env.USE_MOCK_DATA
-    ? mock.updateReport(id, status, resolution_note)
-    : http.patch(`/admin/reports/${id}`, { status, resolution_note });
+  http.patch(`/admin/reports/${id}`, { status, resolution_note });
+
+export const listAllEvents = (params) => http.get("/admin/events", { params });
+
+export const createCategory = (name) => http.post("/categories", { name });
+export const deleteCategory = (id) => http.delete(`/categories/${id}`);

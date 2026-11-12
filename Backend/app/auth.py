@@ -1,9 +1,10 @@
 import jwt
 from bson import ObjectId
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.config import settings
+from app.database import get_db
+from app.security import decode_access_token
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -16,18 +17,9 @@ def _unauthorized(message: str):
     )
 
 
-async def get_current_user(
-    request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-) -> dict:
-    if credentials is None:
-        raise _unauthorized("Please log in first.")
+def load_user_from_token(token: str) -> dict:
     try:
-        payload = jwt.decode(
-            credentials.credentials,
-            settings.JWT_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM],
-        )
+        payload = decode_access_token(token)
     except jwt.InvalidTokenError:
         raise _unauthorized("Your session is invalid or has expired. Please log in again.")
 
@@ -35,26 +27,39 @@ async def get_current_user(
     if not ObjectId.is_valid(user_id):
         raise _unauthorized("Invalid token.")
 
-    user = await request.app.state.database.users.find_one({"_id": ObjectId(user_id)})
+    user = get_db().users.find_one({"_id": ObjectId(user_id)})
     if user is None or not user.get("is_active", False):
         raise _unauthorized("This account is not active.")
     return user
 
 
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+) -> dict:
+    if credentials is None:
+        raise _unauthorized("Please log in first.")
+    return load_user_from_token(credentials.credentials)
+
+
 def get_optional_user(
-    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
 ):
-    # Public event listing does not require a token in this stage.
-    return None
+    if credentials is None:
+        return None
+    try:
+        return load_user_from_token(credentials.credentials)
+    except HTTPException:
+        return None
 
 
 def require_role(*roles: str):
-    async def checker(user: dict = Depends(get_current_user)) -> dict:
+
+    def checker(user: dict = Depends(get_current_user)) -> dict:
         if user["role"] not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You don't have permission to do this.",
             )
         return user
+
     return checker

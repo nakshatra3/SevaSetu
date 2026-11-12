@@ -6,7 +6,6 @@ from app.schemas import RegisterRequest
 
 
 def serialize_user(user: dict) -> dict:
-    """Return safe user fields without the password hash."""
     return {
         "id": str(user["_id"]),
         "name": user["name"],

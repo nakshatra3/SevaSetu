@@ -5,10 +5,12 @@ import { ROLES } from "./constants";
 export const NAV_ITEMS = {
   [ROLES.VOLUNTEER]: [
     { to: "/app/volunteer/profile", label: "My profile" },
+    { to: "/app/leaderboard", label: "Leaderboard" },
     { to: "/app/notifications", label: "Notifications" },
   ],
   [ROLES.ORGANIZATION]: [
     { to: "/app/organization/profile", label: "Organization profile" },
+    { to: "/app/leaderboard", label: "Leaderboard" },
     { to: "/app/notifications", label: "Notifications" },
   ],
   [ROLES.ADMIN]: [
@@ -16,6 +18,7 @@ export const NAV_ITEMS = {
     { to: "/app/admin/users", label: "Users" },
     { to: "/app/admin/organizations", label: "Organizations" },
     { to: "/app/admin/reports", label: "Reports" },
+    { to: "/app/leaderboard", label: "Leaderboard" },
     { to: "/app/notifications", label: "Notifications" },
   ],
 };

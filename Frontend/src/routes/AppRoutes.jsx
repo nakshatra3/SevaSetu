@@ -20,6 +20,8 @@ import AdminUsersPage from "@/features/admin/AdminUsersPage";
 import AdminOrganizationsPage from "@/features/admin/AdminOrganizationsPage";
 import AdminReportsPage from "@/features/admin/AdminReportsPage";
 
+import LeaderboardPage from "@/features/leaderboard/LeaderboardPage";
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -39,6 +41,7 @@ export default function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route path="app" element={<DashboardLayout />}>
           <Route index element={<RoleHomeRedirect />} />
+          <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
 
           {/* Read-only profiles, visible to any logged-in user */}

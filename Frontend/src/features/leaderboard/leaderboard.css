@@ -1,0 +1,9 @@
+.impact-card { padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); }
+.impact-card h2 { margin-top: 0; }
+.impact-card label { display: grid; gap: 8px; }
+.leaderboard-scroll { overflow-x: auto; }
+.impact-table { width: 100%; border-collapse: collapse; background: var(--surface); text-align: left; }
+.impact-table caption { text-align: left; padding: 12px 0; color: var(--ink-soft); }
+.impact-table th, .impact-table td { padding: 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.impact-table th, .impact-you { background: var(--teal-100); }
+.recommendation-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }

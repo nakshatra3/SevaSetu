@@ -7,6 +7,10 @@ from app import database
 from app.config import settings
 from app.routes import (
     auth,
+    events,
+    notifications,
+    organizations,
+    registrations,
 )
 
 
@@ -30,6 +34,10 @@ app.add_middleware(
 
 for module in [
     auth,
+    organizations,
+    events,
+    registrations,
+    notifications,
 ]:
     app.include_router(module.router, prefix="/api/v1")
 

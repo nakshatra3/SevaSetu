@@ -10,7 +10,6 @@ from app.utils.serializers import event_status, event_to_dict, organizations_by_
 
 router = APIRouter(tags=["Registrations"])
 
-
 @router.post("/events/{event_id}/register")
 def register_for_event(event_id: str, user: dict = Depends(require_role("volunteer"))):
     db = get_db()

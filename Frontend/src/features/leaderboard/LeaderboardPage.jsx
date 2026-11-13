@@ -6,6 +6,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import QueryState from "@/components/common/QueryState";
 import Button from "@/components/ui/Button";
 import "./leaderboard.css";
+import DemoRecommendations from "./DemoRecommendations";
 
 export default function LeaderboardPage() {
   const { user } = useContext(AuthContext);
@@ -58,5 +59,6 @@ export default function LeaderboardPage() {
         </tr>)}</tbody>
       </table></div> : <section className="impact-card"><h2>No contributions yet</h2><p>Complete an event and ask its organizer to confirm your attendance.</p></section>}
     </QueryState>
+    <DemoRecommendations />
   </div>;
 }

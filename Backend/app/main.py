@@ -6,6 +6,7 @@ from app.config import settings
 from app.database import database, connect_database, close_database
 from app.routes.auth import router as auth_router
 from app.routes.events import router as events_router
+from app.routes.leaderboard import router as leaderboard_router
 
 
 @asynccontextmanager
@@ -22,6 +23,7 @@ app = FastAPI(title=settings.APP_NAME, version="1.0.0", lifespan=lifespan)
 
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(events_router, prefix="/api/v1")
+app.include_router(leaderboard_router, prefix="/api/v1")
 
 
 @app.get("/health")

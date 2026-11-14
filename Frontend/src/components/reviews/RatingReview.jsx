@@ -3,7 +3,6 @@ import Alert from "@/components/ui/Alert";
 import Button from "@/components/ui/Button";
 import FormField from "@/components/ui/FormField";
 
-// Shows 1-5 stars. Pass setRating to make it clickable.
 export function StarRating({ rating = 0, setRating, readOnly = false, size = "md" }) {
   const [hover, setHover] = useState(0);
   const shown = hover || rating;
@@ -39,7 +38,6 @@ export function StarRating({ rating = 0, setRating, readOnly = false, size = "md
   );
 }
 
-// onSubmit({ rating, comment }) must return a promise (the API call).
 export function ReviewForm({ title = "Leave a rating & review", onSubmit }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");

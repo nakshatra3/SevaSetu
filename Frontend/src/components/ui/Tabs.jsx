@@ -1,5 +1,3 @@
-// Simple tab buttons.
-// <Tabs value={tab} onChange={setTab} options={[{ value: "upcoming", label: "Upcoming" }]} />
 export default function Tabs({ value, onChange, options, label = "Views" }) {
   return (
     <div className="tabs" role="tablist" aria-label={label}>

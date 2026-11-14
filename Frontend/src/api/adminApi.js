@@ -1,14 +1,12 @@
 import { http } from "./httpClient";
 
-// Every call here needs an admin account (the backend checks the role).
-
 export const getAdminStats = () => http.get("/admin/stats");
 
 export const listUsers = (params) => http.get("/admin/users", { params });
 export const setUserActive = (id, is_active) => http.patch(`/admin/users/${id}`, { is_active });
 
 export const listOrganizations = (params) => http.get("/admin/organizations", { params });
-// status: "verified" | "rejected"
+
 export const reviewOrganization = (id, status, note = "") =>
   http.patch(`/admin/organizations/${id}/verification`, { status, note });
 
@@ -16,8 +14,6 @@ export const listReports = (params) => http.get("/admin/reports", { params });
 
 
 
-
-// status: "resolved" | "dismissed"
 
 export const updateReport = (id, status, resolution_note = "") =>
   http.patch(`/admin/reports/${id}`, { status, resolution_note });

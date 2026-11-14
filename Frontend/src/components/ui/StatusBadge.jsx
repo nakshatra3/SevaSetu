@@ -7,7 +7,6 @@ const TONES = {
   donation: DONATION_STATUS_TONES,
 };
 
-// <StatusBadge kind="event" status="upcoming" />
 export default function StatusBadge({ kind, status }) {
   const tone = TONES[kind]?.[status] || "neutral";
   const label = status ? status[0].toUpperCase() + status.slice(1) : "-";

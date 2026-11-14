@@ -6,7 +6,6 @@ import { getTokenExpiry } from "@/utils/jwt";
 
 export const AuthContext = createContext(null);
 
-// Restore a saved session, dropping it if the token already expired.
 function readSession() {
   const token = tokenStorage.get();
   const user = userStorage.get();
@@ -41,13 +40,11 @@ export function AuthProvider({ children }) {
     clearSession();
   }, [clearSession]);
 
-  // Any 401 from the API logs the user out.
   useEffect(() => {
     setUnauthorizedHandler(expire);
     return () => setUnauthorizedHandler(null);
   }, [expire]);
 
-  // Log out automatically when the JWT expires (backend default: 30 min).
   useEffect(() => {
     clearTimeout(timer.current);
     if (!session.token) return undefined;
@@ -58,6 +55,18 @@ export function AuthProvider({ children }) {
     return () => clearTimeout(timer.current);
   }, [session.token, expire]);
 
+  useEffect(() => {
+    if (!session.token) return;
+    authApi
+      .getCurrentUser()
+      .then((user) => {
+        userStorage.set(user);
+        setSession((prev) => (prev.token ? { ...prev, user } : prev));
+      })
+      .catch(() => {
+      });
+  }, []);
+
   const login = useCallback(async (credentials) => {
     const data = await authApi.login(credentials);
     tokenStorage.set(data.access_token);
@@ -67,7 +76,6 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
-  // The backend returns only the new user (no token), so the user logs in next.
   const register = useCallback((payload) => authApi.register(payload), []);
 
   const updateUser = useCallback((patch) => {

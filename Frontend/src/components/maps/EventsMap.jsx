@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { DEFAULT_MAP_CENTER } from "@/config/constants";
 import { formatDateTime } from "@/utils/format";
 
-// Calls onPick({lat, lng}) when the map is clicked.
 function ClickHandler({ onPick }) {
   useMapEvents({
     click(e) {
@@ -13,8 +12,6 @@ function ClickHandler({ onPick }) {
   return null;
 }
 
-// Shows events as circles on an OpenStreetMap map (Leaflet).
-// center: {lat, lng} of the search point (optional), radiusKm draws the search circle.
 export default function EventsMap({ events, center, radiusKm, onPick, height = 420 }) {
   const mapCenter = center ? [center.lat, center.lng] : DEFAULT_MAP_CENTER;
   const withLocation = events.filter((e) => e.latitude != null && e.longitude != null);

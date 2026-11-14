@@ -40,8 +40,6 @@ export default function AppRoutes() {
         <Route path="app" element={<DashboardLayout />}>
           <Route index element={<RoleHomeRedirect />} />
           <Route path="notifications" element={<NotificationsPage />} />
-
-          {/* Read-only profiles, visible to any logged-in user */}
           <Route path="volunteers/:id" element={<VolunteerProfilePage />} />
           <Route path="organizations/:id" element={<OrganizationProfilePage />} />
 

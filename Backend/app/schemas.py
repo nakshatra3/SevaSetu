@@ -8,6 +8,7 @@ from app.utils.helpers import clean_tags, to_naive_local
 
 MAX_TAGS = 20
 
+
 def validate_tags(values: list[str]) -> list[str]:
     values = clean_tags(values)
     if len(values) > MAX_TAGS:
@@ -16,7 +17,11 @@ def validate_tags(values: list[str]) -> list[str]:
         raise ValueError("Each item must be 40 characters or fewer.")
     return values
 
+
 TagList = Annotated[list[str], AfterValidator(validate_tags)]
+
+
+# Auth
 
 class RegisterRequest(BaseModel):
     name: str = Field(min_length=2, max_length=100)
@@ -36,9 +41,34 @@ class RegisterRequest(BaseModel):
             raise ValueError("Referral codes are only for volunteer accounts.")
         return self
 
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=1, max_length=128)
+
+
+# profiles
+
+class VolunteerProfileUpdate(BaseModel):
+    city: str = Field(default="", max_length=80)
+    college: str = Field(default="", max_length=120)
+    phone: str = Field(default="", max_length=20, pattern=r"^[0-9+\- ]*$")
+    bio: str = Field(default="", max_length=500)
+    skills: TagList = []
+    interests: TagList = []
+    availability: list[str] = []
+    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
+    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
+
+
+    @field_validator("availability")
+    @classmethod
+    def check_availability(cls, values):
+        for value in values:
+            if value not in TIME_SLOTS:
+                raise ValueError(f"Unknown availability option: {value}")
+        return list(dict.fromkeys(values))
+
 
 class OrganizationUpdate(BaseModel):
     name: str = Field(min_length=2, max_length=150)
@@ -49,6 +79,7 @@ class OrganizationUpdate(BaseModel):
     contact_email: Optional[EmailStr] = None
     phone: str = Field(default="", max_length=20, pattern=r"^[0-9+\- ]*$")
     categories: TagList = []
+
 
     @field_validator("contact_email", mode="before")
     @classmethod
@@ -63,10 +94,13 @@ class OrganizationUpdate(BaseModel):
             raise ValueError("Start the address with http:// or https://")
         return value
 
+
 class VerificationRequest(BaseModel):
     note: str = Field(default="", max_length=1000)
     registration_number: str = Field(default="", max_length=50)
 
+
+# events
 class EventCreate(BaseModel):
     title: str = Field(min_length=3, max_length=120)
     description: str = Field(min_length=10, max_length=2000)
@@ -80,6 +114,7 @@ class EventCreate(BaseModel):
     capacity: int = Field(ge=1, le=1000)
     skills_required: TagList = []
 
+
     @field_validator("start_time", "end_time")
     @classmethod
     def strip_timezone(cls, value):
@@ -92,4 +127,55 @@ class EventCreate(BaseModel):
         hours = (self.end_time - self.start_time).total_seconds() / 3600
         if hours > 12:
             raise ValueError("An event can last at most 12 hours. Create separate events for longer drives.")
+        return self
+
+
+# Donation
+
+# review/report
+
+class ReviewCreate(BaseModel):
+    organization_id: Optional[str] = None
+    event_id: Optional[str] = None
+    rating: int = Field(ge=1, le=5)
+    comment: str = Field(default="", max_length=1000)
+
+    @model_validator(mode="after")
+    def need_target(self):
+        if not self.organization_id and not self.event_id:
+            raise ValueError("Choose an organization or an event to review.")
+        return self
+
+
+class ReportCreate(BaseModel):
+    target_type: Literal["user", "organization", "event"]
+    target_id: str
+    reason: Literal["spam", "harassment", "unsafe", "fraud", "other"]
+    details: str = Field(default="", max_length=1000)
+
+
+# Admin
+
+class UserStatusUpdate(BaseModel):
+    is_active: bool
+
+
+class VerificationDecision(BaseModel):
+    status: Literal["verified", "rejected"]
+    note: str = Field(default="", max_length=500)
+
+
+class ReportDecision(BaseModel):
+    status: Literal["resolved", "dismissed"]
+    resolution_note: str = Field(default="", max_length=500)
+
+
+class CategoryCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=50)
+
+
+    @model_validator(mode="after")
+    def categories_needed(self):
+        if self.rule_type == "category_events" and not self.categories:
+            raise ValueError("Pick at least one category for a category badge.")
         return self

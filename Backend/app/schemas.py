@@ -1,3 +1,5 @@
+
+
 from datetime import datetime
 from typing import Annotated, Literal, Optional
 
@@ -21,13 +23,12 @@ def validate_tags(values: list[str]) -> list[str]:
 TagList = Annotated[list[str], AfterValidator(validate_tags)]
 
 
-# Auth
 
 class RegisterRequest(BaseModel):
     name: str = Field(min_length=2, max_length=100)
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
-    role: Literal["volunteer", "organization"]  # admins are created by the seed script
+    role: Literal["volunteer", "organization"] 
     organization_name: Optional[str] = Field(default=None, min_length=2, max_length=150)
     referral_code: Optional[str] = Field(default=None, max_length=20)
 
@@ -46,28 +47,6 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=1, max_length=128)
 
-
-# profiles
-
-class VolunteerProfileUpdate(BaseModel):
-    city: str = Field(default="", max_length=80)
-    college: str = Field(default="", max_length=120)
-    phone: str = Field(default="", max_length=20, pattern=r"^[0-9+\- ]*$")
-    bio: str = Field(default="", max_length=500)
-    skills: TagList = []
-    interests: TagList = []
-    availability: list[str] = []
-    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
-    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
-
-
-    @field_validator("availability")
-    @classmethod
-    def check_availability(cls, values):
-        for value in values:
-            if value not in TIME_SLOTS:
-                raise ValueError(f"Unknown availability option: {value}")
-        return list(dict.fromkeys(values))
 
 
 class OrganizationUpdate(BaseModel):
@@ -100,7 +79,7 @@ class VerificationRequest(BaseModel):
     registration_number: str = Field(default="", max_length=50)
 
 
-# events
+
 class EventCreate(BaseModel):
     title: str = Field(min_length=3, max_length=120)
     description: str = Field(min_length=10, max_length=2000)
@@ -130,9 +109,32 @@ class EventCreate(BaseModel):
         return self
 
 
-# Donation
 
-# review/report
+class DonationCreate(BaseModel):
+    organization_id: str
+    type: Literal["books", "clothes", "food", "money"]
+    amount: Optional[int] = Field(default=None, ge=1, le=10_000_000)  # rupees, for money
+    quantity: Optional[int] = Field(default=None, ge=1, le=10_000)  # items/kg, for goods
+    description: str = Field(default="", max_length=300)
+
+    @model_validator(mode="after")
+    def check_amount_or_quantity(self):
+        if self.type == "money":
+            if not self.amount:
+                raise ValueError("Enter the amount in rupees.")
+            self.quantity = None
+        else:
+            if not self.quantity:
+                raise ValueError("Enter how many items (or kg) you are donating.")
+            self.amount = None
+        return self
+
+
+class DonationDecision(BaseModel):
+    status: Literal["verified", "rejected"]
+    note: str = Field(default="", max_length=300)
+
+
 
 class ReviewCreate(BaseModel):
     organization_id: Optional[str] = None
@@ -147,31 +149,14 @@ class ReviewCreate(BaseModel):
         return self
 
 
-class ReportCreate(BaseModel):
-    target_type: Literal["user", "organization", "event"]
-    target_id: str
-    reason: Literal["spam", "harassment", "unsafe", "fraud", "other"]
-    details: str = Field(default="", max_length=1000)
 
-
-# Admin
-
-class UserStatusUpdate(BaseModel):
-    is_active: bool
-
-
-class VerificationDecision(BaseModel):
-    status: Literal["verified", "rejected"]
-    note: str = Field(default="", max_length=500)
-
-
-class ReportDecision(BaseModel):
-    status: Literal["resolved", "dismissed"]
-    resolution_note: str = Field(default="", max_length=500)
-
-
-class CategoryCreate(BaseModel):
-    name: str = Field(min_length=2, max_length=50)
+class BadgeCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=60)
+    description: str = Field(min_length=5, max_length=200)
+    icon: str = Field(default="🏅", max_length=8)
+    rule_type: Literal["events", "hours", "category_events", "donations", "referrals", "points"]
+    threshold: int = Field(ge=1, le=100000)
+    categories: TagList = []
 
 
     @model_validator(mode="after")

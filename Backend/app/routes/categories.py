@@ -1,3 +1,5 @@
+"""Event categories (Teaching, Cleaning, Plantation...). Admins add or remove them."""
+
 import re
 
 from fastapi import APIRouter, Depends, status
@@ -28,6 +30,7 @@ def list_categories():
 def create_category(data: CategoryCreate, user: dict = Depends(require_role("admin"))):
     db = get_db()
     name = data.name.strip()
+    # "teaching" and "Teaching" count as the same category.
     same_name = {"$regex": "^" + re.escape(name) + "$", "$options": "i"}
     if db.categories.find_one({"name": same_name}):
         raise conflict("This category already exists.")

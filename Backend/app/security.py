@@ -5,6 +5,7 @@ from pwdlib import PasswordHash
 
 from app.config import settings
 
+# Argon2 password hashing (recommended by pwdlib). Plain passwords are never stored.
 password_hasher = PasswordHash.recommended()
 
 
@@ -30,6 +31,7 @@ def create_access_token(user_id: str, role: str) -> str:
 
 
 def decode_access_token(token: str) -> dict:
+    """Raises jwt.InvalidTokenError if the token is wrong or expired."""
     return jwt.decode(
         token,
         settings.JWT_SECRET_KEY,

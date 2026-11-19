@@ -1,9 +1,10 @@
-
-fastapi
-uvicorn[standard]
-pymongo
-dnspython
-pydantic-settings
-pwdlib[argon2]
-pyjwt
-email-validator
+# Backend dependencies. Install with:  pip install -r requirements.txt
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30
+pymongo>=4.8,<5.0
+dnspython>=2.6          # needed for mongodb+srv:// (MongoDB Atlas) addresses
+pydantic>=2.7,<3.0
+pydantic-settings>=2.4
+pwdlib[argon2]>=0.2.1   # Argon2 password hashing
+pyjwt>=2.9
+email-validator>=2.2

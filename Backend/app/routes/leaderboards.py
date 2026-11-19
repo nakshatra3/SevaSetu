@@ -1,3 +1,12 @@
+"""Feature 10: Leaderboards (global, city, college, monthly, organization-wise).
+
+All rankings are built from the real `points_ledger` records:
+  global       -> all points
+  monthly      -> points earned since the 1st of this month
+  organization -> points earned through one organization's events/donations
+  city/college -> all points, only volunteers whose profile has that city/college
+"""
+
 import re
 
 from fastapi import APIRouter, Depends, Query
@@ -10,6 +19,7 @@ router = APIRouter(prefix="/leaderboards", tags=["Leaderboards"])
 
 
 def same_text(value: str) -> dict:
+    """Case-insensitive exact match."""
     return {"$regex": "^" + re.escape(value.strip()) + "$", "$options": "i"}
 
 
@@ -40,6 +50,7 @@ def get_leaderboard(
         profiles = db.volunteer_profiles.find({scope: same_text(value)}, {"user_id": 1})
         match["user_id"] = {"$in": [p["user_id"] for p in profiles]}
 
+    # Add up points per volunteer, highest first.
     pipeline = [
         {"$match": match},
         {"$group": {"_id": "$user_id", "points": {"$sum": "$points"}}},
@@ -56,7 +67,7 @@ def get_leaderboard(
 
     entries = []
     for row in totals:
-        if row["_id"] not in users:
+        if row["_id"] not in users:  # skip deactivated accounts
             continue
         profile = profiles.get(row["_id"], {})
         entries.append(
@@ -77,6 +88,7 @@ def get_leaderboard(
 
 @router.get("/options")
 def leaderboard_options(user: dict = Depends(get_current_user)):
+    """Values for the city / college / organization dropdowns."""
     db = get_db()
     cities = sorted({c.strip() for c in db.volunteer_profiles.distinct("city") if c and c.strip()})
     colleges = sorted({c.strip() for c in db.volunteer_profiles.distinct("college") if c and c.strip()})

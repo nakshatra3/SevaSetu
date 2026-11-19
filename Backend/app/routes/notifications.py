@@ -1,3 +1,5 @@
+"""Feature 15: Notifications (registration updates, reminders, nearby events, achievements)."""
+
 from fastapi import APIRouter, Depends
 
 from app.auth import get_current_user

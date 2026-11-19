@@ -1,3 +1,5 @@
+"""Features 9 and 11: points history and badges (admins manage badge definitions)."""
+
 import re
 
 from fastapi import APIRouter, Depends, status
@@ -20,6 +22,7 @@ router = APIRouter(tags=["Points and badges"])
 
 @router.get("/badges")
 def list_badges(user: dict = Depends(get_current_user)):
+    """All badges. For volunteers each badge also shows progress and whether it's earned."""
     db = get_db()
     earned = {}
     stats = None
@@ -65,6 +68,7 @@ def my_points(user: dict = Depends(require_role("volunteer"))):
     }
 
 
+# ---------- Admin: manage badges (Feature 17) ----------
 
 def badge_code(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
@@ -79,6 +83,7 @@ def create_badge(data: BadgeCreate, user: dict = Depends(require_role("admin")))
     except DuplicateKeyError:
         raise conflict("A badge with this name already exists.")
 
+    # Give the new badge to everyone who already qualifies.
     for volunteer in db.users.find({"role": "volunteer"}, {"_id": 1}):
         check_and_award_badges(db, volunteer["_id"])
     return clean_doc(badge)

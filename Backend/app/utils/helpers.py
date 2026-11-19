@@ -1,3 +1,5 @@
+"""Small helpers used by many routes."""
+
 import re
 from datetime import datetime
 
@@ -6,23 +8,30 @@ from fastapi import HTTPException, status
 
 
 def now() -> datetime:
-    
+    """Current time as a "naive" local datetime.
+
+    Event times typed into the website (e.g. 2026-11-02 09:00) are stored exactly
+    as typed, in local time, so we compare them with local time too.
+    """
     return datetime.now().replace(microsecond=0)
 
 
 def to_naive_local(value: datetime) -> datetime:
+    """If a datetime has a timezone, convert it to local time without timezone."""
     if value.tzinfo is not None:
         value = value.astimezone().replace(tzinfo=None)
     return value.replace(second=0, microsecond=0)
 
 
 def to_object_id(value: str, label: str = "Item") -> ObjectId:
+    """Turn an id from the URL into an ObjectId, or answer 404 if it is not valid."""
     if not value or not ObjectId.is_valid(value):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{label} not found.")
     return ObjectId(value)
 
 
 def clean_doc(doc):
+    """Make a MongoDB document JSON friendly: _id -> id and ObjectId -> str."""
     if isinstance(doc, list):
         return [clean_doc(item) for item in doc]
     if isinstance(doc, ObjectId):
@@ -40,10 +49,12 @@ def clean_doc(doc):
 
 
 def contains_text(text: str) -> dict:
+    """Case-insensitive "contains" search for MongoDB (user text is escaped)."""
     return {"$regex": re.escape(text.strip()), "$options": "i"}
 
 
 def clean_tags(values: list[str]) -> list[str]:
+    """Trim tags (skills, interests...), drop empty ones and duplicates."""
     result = []
     for value in values:
         value = value.strip()

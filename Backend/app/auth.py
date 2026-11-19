@@ -1,3 +1,10 @@
+"""Login checks used by the routes.
+
+    user = Depends(get_current_user)            -> any logged-in user
+    user = Depends(require_role("admin"))       -> only admins
+    user = Depends(get_optional_user)           -> logged in or not (public pages)
+"""
+
 import jwt
 from bson import ObjectId
 from fastapi import Depends, HTTPException, status
@@ -28,6 +35,7 @@ def load_user_from_token(token: str) -> dict:
         raise _unauthorized("Invalid token.")
 
     user = get_db().users.find_one({"_id": ObjectId(user_id)})
+    # Deactivated users are logged out immediately, even with a valid token.
     if user is None or not user.get("is_active", False):
         raise _unauthorized("This account is not active.")
     return user
@@ -53,6 +61,7 @@ def get_optional_user(
 
 
 def require_role(*roles: str):
+    """Create a dependency that only lets the given roles through."""
 
     def checker(user: dict = Depends(get_current_user)) -> dict:
         if user["role"] not in roles:

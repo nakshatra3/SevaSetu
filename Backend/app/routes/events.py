@@ -1,3 +1,6 @@
+"""Features 2, 3, 4 and 6: volunteer opportunities (events), map/nearby search,
+search and filters, and event management for organizers."""
+
 import re
 import secrets
 import string
@@ -17,9 +20,11 @@ from app.utils.serializers import event_status, event_to_dict, events_to_list
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
-NEARBY_NOTIFY_KM = 25 
+NEARBY_NOTIFY_KM = 25  # volunteers within this distance hear about new events
+
 
 def new_checkin_code() -> str:
+    """Short secret code shown as a QR code by the organizer at the event."""
     return "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(6))
 
 
@@ -31,6 +36,7 @@ def get_event_or_404(db, event_id: str) -> dict:
 
 
 def check_event_owner(db, event: dict, user: dict):
+    """Organizers may only manage their own events. Admins may manage all."""
     if user["role"] == "admin":
         return
     org = get_my_organization_doc(db, user) if user["role"] == "organization" else None
@@ -39,6 +45,7 @@ def check_event_owner(db, event: dict, user: dict):
 
 
 def check_category(db, category: str) -> str:
+    # Exact name match, ignoring upper/lower case.
     pattern = "^" + re.escape(category.strip()) + "$"
     found = db.categories.find_one({"name": {"$regex": pattern, "$options": "i"}})
     if found is None:
@@ -47,6 +54,7 @@ def check_category(db, category: str) -> str:
 
 
 def event_fields(data: EventCreate, category: str) -> dict:
+    """Values saved for a new or edited event (duration and time slot are calculated)."""
     return {
         "title": data.title.strip(),
         "description": data.description.strip(),
@@ -72,6 +80,7 @@ def registered_volunteer_ids(db, event_id) -> list:
 
 
 def notify_nearby_volunteers(db, event: dict):
+    """Tell volunteers in the same city (or within 25 km) about a new event."""
     city = event["city"].strip().lower()
     for profile in db.volunteer_profiles.find().limit(1000):
         close_by = has_location(profile) and distance_km(
@@ -88,6 +97,9 @@ def notify_nearby_volunteers(db, event: dict):
                 link=f"/app/opportunities/{event['_id']}",
             )
 
+
+# ---------- Search (Features 3 and 4) ----------
+
 @router.get("")
 def search_events(
     q: str = "",
@@ -97,19 +109,20 @@ def search_events(
     date_to: Optional[date] = None,
     min_hours: Optional[float] = Query(default=None, ge=0),
     max_hours: Optional[float] = Query(default=None, ge=0),
-    skills: str = "",  
-    time_slot: str = "", 
+    skills: str = "",  # comma separated
+    time_slot: str = "",  # availability, e.g. "Weekends"
     has_spots: bool = False,
     lat: Optional[float] = Query(default=None, ge=-90, le=90),
     lng: Optional[float] = Query(default=None, ge=-180, le=180),
     radius_km: Optional[float] = Query(default=None, gt=0, le=500),
     include_past: bool = False,
     organization_id: str = "",
-    sort: str = "date",  
+    sort: str = "date",  # "date" or "distance"
     limit: int = Query(default=100, ge=1, le=200),
 ):
     db = get_db()
 
+    # Step 1: filters MongoDB can do directly.
     query = {"status": "active"}
     if not include_past:
         query["end_time"] = {"$gte": now()}
@@ -139,6 +152,7 @@ def search_events(
 
     events = list(db.events.find(query).sort("start_time", 1).limit(500))
 
+    # Step 2: filters that are easier in Python (fine for a few hundred events).
     wanted_skills = {s.strip().lower() for s in skills.split(",") if s.strip()}
     if wanted_skills:
         events = [
@@ -150,6 +164,7 @@ def search_events(
 
     results = events_to_list(db, events)
 
+    # Step 3: distance from the user's location (Feature 3).
     if lat is not None and lng is not None:
         for item in results:
             item["distance_km"] = (
@@ -165,6 +180,9 @@ def search_events(
             results.sort(key=lambda r: r["distance_km"] if r["distance_km"] is not None else 99999)
 
     return results[:limit]
+
+
+# ---------- Organizer: my events (Feature 6) ----------
 
 @router.get("/mine")
 def my_events(user: dict = Depends(require_role("organization"))):

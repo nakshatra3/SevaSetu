@@ -1,3 +1,5 @@
+"""Feature 13: Organization profiles, and the organization side of Feature 16 (verification)."""
+
 from typing import Optional
 
 from fastapi import APIRouter, Depends
@@ -14,6 +16,7 @@ router = APIRouter(prefix="/organizations", tags=["Organizations"])
 
 
 def get_my_organization_doc(db, user: dict) -> dict:
+    """The organization that belongs to the logged-in organization account."""
     org = db.organizations.find_one({"user_id": user["_id"]})
     if org is None:
         org = new_organization(user["_id"], user.get("organization_name") or user["name"])
@@ -23,6 +26,7 @@ def get_my_organization_doc(db, user: dict) -> dict:
 
 @router.get("")
 def list_organizations(q: str = "", verified_only: bool = False):
+    """Short list of organizations (used for dropdowns and the directory)."""
     db = get_db()
     query = {}
     if q.strip():
@@ -60,7 +64,7 @@ def update_my_organization(data: OrganizationUpdate, user: dict = Depends(requir
     values = data.model_dump()
     values["contact_email"] = str(values["contact_email"] or "")
     db.organizations.update_one({"_id": org["_id"]}, {"$set": {**values, "updated_at": now()}})
-
+    # Keep the name on the user account in sync (shown in the top bar).
     db.users.update_one({"_id": user["_id"]}, {"$set": {"organization_name": values["name"]}})
 
     return organization_to_dict(db, db.organizations.find_one({"_id": org["_id"]}), private=True)
@@ -73,6 +77,7 @@ def request_verification(data: VerificationRequest, user: dict = Depends(require
     if org.get("verification_status") not in ("unverified", "rejected"):
         raise bad_request("Verification is already pending or approved.")
 
+    # These details are private: only the organization and admins can see them.
     db.organizations.update_one(
         {"_id": org["_id"]},
         {
@@ -97,6 +102,7 @@ def request_verification(data: VerificationRequest, user: dict = Depends(require
 
 @router.get("/me/stats")
 def my_organization_stats(user: dict = Depends(require_role("organization"))):
+    """Numbers for the organizer dashboard."""
     db = get_db()
     org = get_my_organization_doc(db, user)
     events = list(db.events.find({"organization_id": org["_id"], "status": "active"}))

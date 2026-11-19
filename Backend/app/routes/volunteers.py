@@ -4,6 +4,7 @@ from app.auth import get_current_user, require_role
 from app.database import get_db
 from app.schemas import VolunteerProfileUpdate
 from app.services.auth_service import new_volunteer_profile
+from app.utils.gamification import get_user_badges, get_volunteer_stats
 from app.utils.helpers import not_found, now, to_object_id
 
 router = APIRouter(prefix="/volunteers", tags=["Volunteer profiles"])
@@ -45,7 +46,8 @@ def volunteer_history(db, user_id) -> list:
 
 def profile_to_dict(db, user: dict, private: bool) -> dict:
     profile = get_or_create_profile(db, user["_id"])
-    
+    stats = get_volunteer_stats(db, user["_id"])
+
     data = {
         "id": str(user["_id"]),
         "user_id": str(user["_id"]),
@@ -56,6 +58,11 @@ def profile_to_dict(db, user: dict, private: bool) -> dict:
         "skills": profile.get("skills", []),
         "interests": profile.get("interests", []),
         "availability": profile.get("availability", []),
+        "total_hours": stats["total_hours"],
+        "points": stats["points"],
+        "completed_activities": stats["events_attended"],
+        "verified_donations": stats["verified_donations"],
+        "achievements": get_user_badges(db, user["_id"]),
         "history": volunteer_history(db, user["_id"]),
     }
     if private:

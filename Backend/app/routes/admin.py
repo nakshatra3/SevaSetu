@@ -36,7 +36,7 @@ def platform_stats(admin: dict = Depends(admin_only)):
     }
 
 
-#Users 
+# users
 @router.get("/users")
 def list_users(search: str = "", role: str = "", admin: dict = Depends(admin_only)):
     db = get_db()
@@ -63,7 +63,7 @@ def set_user_active(user_id: str, data: UserStatusUpdate, admin: dict = Depends(
     return user_to_dict(db.users.find_one({"_id": oid}))
 
 
-#Organisation 
+# orgs
 @router.get("/organizations")
 def list_organizations(
     verification_status: str = Query(default="", pattern="^(|unverified|pending|verified|rejected)$"),
@@ -96,7 +96,8 @@ def decide_verification(org_id: str, data: VerificationDecision, admin: dict = D
     return organization_to_dict(db, db.organizations.find_one({"_id": org["_id"]}), private=True)
 
 
-# reports
+#reports
+
 @router.get("/reports")
 def list_reports(
     status: str = Query(default="", pattern="^(|open|resolved|dismissed)$"),
@@ -133,7 +134,7 @@ def decide_report(report_id: str, data: ReportDecision, admin: dict = Depends(ad
     return {"id": report_id, **update}
 
 
-# Events
+# events
 
 @router.get("/events")
 def list_all_events(q: str = "", status: str = "", admin: dict = Depends(admin_only)):

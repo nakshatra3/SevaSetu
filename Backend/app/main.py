@@ -7,6 +7,7 @@ from app import database
 from app.config import settings
 from app.routes import (
     auth,
+    categories,
     donations,
     events,
     gamification,
@@ -44,8 +45,10 @@ for module in [
     donations,
     reviews,
     notifications,
+    reports,
     gamification,
     leaderboards,
+    admin,
 ]:
     app.include_router(module.router, prefix="/api/v1")
 

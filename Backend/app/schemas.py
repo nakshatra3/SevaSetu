@@ -22,7 +22,7 @@ def validate_tags(values: list[str]) -> list[str]:
 
 TagList = Annotated[list[str], AfterValidator(validate_tags)]
 
-
+# auth
 
 class RegisterRequest(BaseModel):
     name: str = Field(min_length=2, max_length=100)
@@ -109,6 +109,7 @@ class EventCreate(BaseModel):
         return self
 
 
+#  donation
 
 class DonationCreate(BaseModel):
     organization_id: str
@@ -135,6 +136,7 @@ class DonationDecision(BaseModel):
     note: str = Field(default="", max_length=300)
 
 
+# reports
 
 class ReviewCreate(BaseModel):
     organization_id: Optional[str] = None
@@ -148,6 +150,32 @@ class ReviewCreate(BaseModel):
             raise ValueError("Choose an organization or an event to review.")
         return self
 
+
+class ReportCreate(BaseModel):
+    target_type: Literal["user", "organization", "event"]
+    target_id: str
+    reason: Literal["spam", "harassment", "unsafe", "fraud", "other"]
+    details: str = Field(default="", max_length=1000)
+
+
+# admin
+
+class UserStatusUpdate(BaseModel):
+    is_active: bool
+
+
+class VerificationDecision(BaseModel):
+    status: Literal["verified", "rejected"]
+    note: str = Field(default="", max_length=500)
+
+
+class ReportDecision(BaseModel):
+    status: Literal["resolved", "dismissed"]
+    resolution_note: str = Field(default="", max_length=500)
+
+
+class CategoryCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=50)
 
 
 class BadgeCreate(BaseModel):

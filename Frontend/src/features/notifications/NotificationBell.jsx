@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getUnreadCount } from "@/api/notificationsApi";
 
-const POLL_MS = 60000; // swap for WebSocket/SSE later if you need real-time
+const POLL_MS = 60000; 
 
 export default function NotificationBell() {
   const [count, setCount] = useState(0);

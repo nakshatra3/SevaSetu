@@ -1,6 +1,5 @@
 import { useId, useState } from "react";
 
-// Type a value and press Enter or comma to add it. Used for skills, interests, categories.
 export default function TagInput({ label, value, onChange, placeholder = "Type and press Enter", hint }) {
   const id = useId();
   const [draft, setDraft] = useState("");

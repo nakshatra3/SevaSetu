@@ -10,10 +10,9 @@ export const ROLE_LABELS = {
   admin: "Admin",
 };
 
-// Where each role lands after login.
 export const ROLE_HOME = {
-  volunteer: "/app/volunteer/profile",
-  organization: "/app/organization/profile",
+  volunteer:   "/app/volunteer/dashboard",
+  organization:  "/app/organization/dashboard",
   admin: "/app/admin",
 };
 
@@ -26,21 +25,21 @@ export const VERIFICATION_STATUS = {
 
 export const VERIFICATION_LABELS = {
   unverified: "Not verified",
-  pending: "Verification pending",
+  pending:  "Verification pending",
   verified: "Verified",
-  rejected: "Verification rejected",
+  rejected:  "Verification rejected",
 };
 
 export const REPORT_TARGETS = {
   USER: "user",
-  ORGANIZATION: "organization",
-  EVENT: "event", // used once Part B (events) exists
+  ORGANIZATION:"organization",
+  EVENT: "event",
 };
 
 export const REPORT_REASONS = [
   { value: "spam", label: "Spam or fake listing" },
   { value: "harassment", label: "Harassment or abuse" },
-  { value: "unsafe", label: "Unsafe activity" },
+  { value:  "unsafe", label: "Unsafe activity" },
   { value: "fraud", label: "Fraud or misleading information" },
   { value: "other", label: "Something else" },
 ];
@@ -52,8 +51,37 @@ export const REPORT_STATUS = {
 };
 
 export const AVAILABILITY_OPTIONS = [
-  "Weekday mornings",
-  "Weekday evenings",
+  "Weekday mornings", 
+  "Weekday afternoons", 
+  "Weekday evenings", 
   "Weekends",
-  "Public holidays",
 ];
+
+export const EVENT_STATUS_TONES = {
+  upcoming: "info",
+  ongoing: "warning",
+  completed: "success",
+  cancelled: "danger",
+};
+
+export const REGISTRATION_STATUS_TONES = {
+  registered: "info",
+  attended: "success",
+  cancelled: "neutral",
+};
+export const DONATION_TYPES = [
+  { value: "books", label: "Books", unit: "books" },
+  { value: "clothes", label: "Clothes", unit: "items" },
+  { value: "food", label: "Food", unit: "kg / packets" },
+  { value: "money", label: "Money", unit: "rupees" },
+];
+
+export const DONATION_STATUS_TONES = {
+  pending: "warning",
+  verified: "success",
+  rejected: "danger",
+};
+
+export const DEFAULT_MAP_CENTER = [19.076, 72.8777];
+
+export const RADIUS_OPTIONS = [5, 10, 25, 50, 100];

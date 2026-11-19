@@ -2,7 +2,6 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ROLE_HOME } from "@/config/constants";
 
-// Only logged-in users. Pass roles={[...]} to limit by role.
 export function ProtectedRoute({ roles }) {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
@@ -16,7 +15,6 @@ export function ProtectedRoute({ roles }) {
   return <Outlet />;
 }
 
-// Only logged-out users (login/register). Logged-in users are sent onward.
 export function GuestRoute() {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();

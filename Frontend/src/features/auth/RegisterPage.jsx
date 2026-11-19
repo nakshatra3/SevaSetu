@@ -8,7 +8,7 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { ROLES } from "@/config/constants";
 import { hasErrors, validateEmail, validateName, validateOrganizationName, validatePassword } from "@/utils/validators";
 
-const EMPTY = { role: ROLES.VOLUNTEER, name: "", organization_name: "", email: "", password: "", confirm: "" };
+const EMPTY = { role: ROLES.VOLUNTEER, name: "", organization_name: "", email: "", password: "", confirm: "", referral_code: "" };
 
 export default function RegisterPage() {
   useDocumentTitle("Create account");
@@ -46,12 +46,13 @@ export default function RegisterPage() {
         password: form.password,
         role: form.role,
         ...(isOrg ? { organization_name: form.organization_name.trim() } : {}),
+        ...(!isOrg && form.referral_code.trim() ? { referral_code: form.referral_code.trim() } : {}),
       };
       await register(payload);
       navigate("/login", { replace: true, state: { notice: "Account created. Log in to continue.", email: payload.email } });
     } catch (err) {
-      // 409 = email already used; 422 = field errors from FastAPI/Pydantic.
       if (err.status === 409) setErrors({ email: err.message });
+      else if (err.message === "Referral code not found.") setErrors({ referral_code: err.message });
       else if (Object.keys(err.fieldErrors || {}).length) setErrors(err.fieldErrors);
       else setSubmitError(err.message);
       setLoading(false);
@@ -86,6 +87,9 @@ export default function RegisterPage() {
         <FormField label="Email" type="email" autoComplete="email" value={form.email} onChange={update("email")} error={errors.email} />
         <FormField label="Password" type="password" autoComplete="new-password" hint="At least 8 characters." value={form.password} onChange={update("password")} error={errors.password} />
         <FormField label="Confirm password" type="password" autoComplete="new-password" value={form.confirm} onChange={update("confirm")} error={errors.confirm} />
+        {!isOrg && (
+          <FormField label="Referral code (optional)" hint="Got a code from a friend? They earn points after your first activity." maxLength={20} value={form.referral_code} onChange={update("referral_code")} error={errors.referral_code} />
+        )}
 
         <Button type="submit" loading={loading}>Create account</Button>
       </form>

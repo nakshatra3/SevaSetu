@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
@@ -9,7 +10,6 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { listNotifications, markAllNotificationsRead, markNotificationRead } from "@/api/notificationsApi";
 import { timeAgo } from "@/utils/format";
 
-// Tells the bell in the top bar to refetch its unread count.
 const announceChange = () => window.dispatchEvent(new Event("sevasetu:notifications-changed"));
 
 export default function NotificationsPage() {
@@ -63,7 +63,7 @@ export default function NotificationsPage() {
             {items.map((n) => (
               <li key={n.id} className={n.read ? "" : "is-unread"}>
                 <div>
-                  <strong>{n.title}</strong>
+                  <strong>{n.link ? <Link to={n.link} onClick={() => !n.read && markRead(n.id)}>{n.title}</Link> : n.title}</strong>
                   <p>{n.body}</p>
                   <small className="muted">{timeAgo(n.created_at)}</small>
                 </div>
@@ -73,7 +73,7 @@ export default function NotificationsPage() {
           </ul>
         ) : (
           <EmptyState title={unreadOnly ? "No unread notifications" : "No notifications yet"}>
-            Reminders, registration updates and achievements will show up here.
+            Reminder, registration updates and achievements will shows up here.
           </EmptyState>
         )}
       </QueryState>

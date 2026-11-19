@@ -16,9 +16,10 @@ import { timeAgo } from "@/utils/format";
 const reasonLabel = (value) => REPORT_REASONS.find((r) => r.value === value)?.label || value;
 const TONES = { open: "warning", resolved: "success", dismissed: "neutral" };
 
-// Link to the reported profile where one exists. Extend for events in Part B.
 function targetLink(report) {
   if (report.target_type === "organization") return `/app/organizations/${report.target_id}`;
+  if (report.target_type === "event") return `/app/opportunities/${report.target_id}`;
+  if (report.target_type === "user") return `/app/admin/users`;
   return null;
 }
 
@@ -72,6 +73,11 @@ export default function AdminReportsPage() {
                 </div>
                 <p><strong>{reasonLabel(r.reason)}</strong> · reported by {r.reporter_name} · {r.target_type}</p>
                 {r.details && <p>{r.details}</p>}
+                {r.status === REPORT_STATUS.OPEN && (
+                  <p className="muted">
+                    Moderation: {r.target_type === "event" ? "cancel the event from the Events page" : r.target_type === "user" ? "deactivate the account from the Users page" : "reject verification or deactivate the account"} if needed.
+                  </p>
+                )}
                 {r.status === REPORT_STATUS.OPEN ? (
                   <>
                     <FormField label="Note (optional)" value={note[r.id] || ""} onChange={(e) => setNote((n) => ({ ...n, [r.id]: e.target.value }))} />

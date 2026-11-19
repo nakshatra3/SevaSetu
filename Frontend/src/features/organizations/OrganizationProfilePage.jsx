@@ -3,22 +3,27 @@ import { Link, useParams } from "react-router-dom";
 import Alert from "@/components/ui/Alert";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
+import FormField from "@/components/ui/FormField";
+import Modal from "@/components/ui/Modal";
 import PageHeader from "@/components/ui/PageHeader";
+import StatusBadge from "@/components/ui/StatusBadge";
 import TagList from "@/components/ui/TagList";
 import QueryState from "@/components/common/QueryState";
+import { StarRating } from "@/components/reviews/RatingReview";
 import VerificationBadge from "@/features/verification/VerificationBadge";
 import ReportDialog from "@/features/verification/ReportDialog";
+import ReviewsSection from "@/features/reviews/ReviewsSection";
 import OrganizationProfileForm from "./OrganizationProfileForm";
 import { useApiData } from "@/hooks/useApiData";
+import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { getMyOrganization, getOrganization, requestVerification, updateMyOrganization } from "@/api/organizationsApi";
-import { REPORT_TARGETS, VERIFICATION_STATUS } from "@/config/constants";
+import { REPORT_TARGETS, ROLES, VERIFICATION_STATUS } from "@/config/constants";
 import { formatDate } from "@/utils/format";
 
-// /app/organization/profile -> own organization (editable, can request verification)
-// /app/organizations/:id    -> any organization (read-only, can report)
 export default function OrganizationProfilePage() {
   const { id } = useParams();
+  const { user } = useAuth();
   const isOwn = !id;
   useDocumentTitle(isOwn ? "Organization profile" : "Organization");
 
@@ -28,28 +33,14 @@ export default function OrganizationProfilePage() {
   );
   const [editing, setEditing] = useState(false);
   const [reporting, setReporting] = useState(false);
+  const [askingVerification, setAskingVerification] = useState(false);
   const [notice, setNotice] = useState("");
-  const [actionError, setActionError] = useState("");
-  const [verifying, setVerifying] = useState(false);
 
   const save = async (values) => {
     const updated = await updateMyOrganization(values);
     setData(updated);
     setEditing(false);
     setNotice("Organization profile saved.");
-  };
-
-  const askForVerification = async () => {
-    setVerifying(true);
-    setActionError("");
-    try {
-      setData(await requestVerification(""));
-      setNotice("Verification requested. An admin will review your organization.");
-    } catch (err) {
-      setActionError(err.message);
-    } finally {
-      setVerifying(false);
-    }
   };
 
   const canRequest = org && isOwn && [VERIFICATION_STATUS.UNVERIFIED, VERIFICATION_STATUS.REJECTED].includes(org.verification_status);
@@ -65,33 +56,46 @@ export default function OrganizationProfilePage() {
               isOwn ? (
                 !editing && <Button variant="secondary" onClick={() => { setNotice(""); setEditing(true); }}>Edit profile</Button>
               ) : (
-                <Button variant="ghost" onClick={() => setReporting(true)}>Report</Button>
+                <>
+                  {user.role === ROLES.VOLUNTEER && (
+                    <Link className="btn btn--primary" to={`/app/donations?organization=${org.id}`}>Donate</Link>
+                  )}
+                  <Button variant="ghost" onClick={() => setReporting(true)}>Report</Button>
+                </>
               )
             }
           />
 
           <div className="row">
             <VerificationBadge status={org.verification_status} />
-            <span className="muted">
-              {org.rating_count ? `${org.rating_average.toFixed(1)} rating from ${org.rating_count} reviews` : "No ratings yet"}
-            </span>
+            {org.rating_count ? (
+              <span className="row">
+                <StarRating rating={org.rating_average} readOnly size="sm" />
+                <span className="muted">{org.rating_average.toFixed(1)} from {org.rating_count} reviews</span>
+              </span>
+            ) : (
+              <span className="muted">No ratings yet</span>
+            )}
           </div>
 
           {notice && <Alert type="success">{notice}</Alert>}
-          {actionError && <Alert type="error">{actionError}</Alert>}
           {isOwn && org.verification_status === VERIFICATION_STATUS.REJECTED && (
             <Alert type="warning">Verification was rejected. {org.verification_note || "Update your details and request it again."}</Alert>
+          )}
+          {isOwn && org.verification_status === VERIFICATION_STATUS.PENDING && (
+            <Alert type="warning">Your verification request is waiting for an admin.</Alert>
           )}
           {canRequest && (
             <div className="card row row--between">
               <p>Verified organizations are shown with a badge, so volunteers can trust them.</p>
-              <Button onClick={askForVerification} loading={verifying}>Request verification</Button>
+              <Button onClick={() => setAskingVerification(true)}>Request verification</Button>
             </div>
           )}
 
           <div className="stats">
             <div className="stat"><strong>{org.stats.events_hosted}</strong><span>events hosted</span></div>
             <div className="stat"><strong>{org.stats.volunteers_engaged}</strong><span>volunteers engaged</span></div>
+            <div className="stat"><strong>{org.stats.hours_delivered}</strong><span>volunteer hours</span></div>
           </div>
 
           {editing ? (
@@ -100,7 +104,7 @@ export default function OrganizationProfilePage() {
             <>
               <section className="card stack">
                 <h2>About</h2>
-                <p>{org.description || <span className="muted">No description yet.</span>}</p>
+                <p className="prewrap">{org.description || <span className="muted">No description yet.</span>}</p>
                 <h3>Focus areas</h3>
                 <TagList items={org.categories} empty="No focus areas added." />
                 <h3>Contact</h3>
@@ -115,12 +119,19 @@ export default function OrganizationProfilePage() {
               </section>
 
               <section className="card stack">
-                <h2>Events</h2>
-                {/* Part B (Events) will replace this with a real event list. */}
+                <h2>Events & activities</h2>
                 {org.events.length ? (
                   <ul className="list">
                     {org.events.map((ev) => (
-                      <li key={ev.id}><strong>{ev.title}</strong><span className="muted">{formatDate(ev.date)}</span></li>
+                      <li key={ev.id}>
+                        <span>
+                          <Link to={`/app/opportunities/${ev.id}`}>{ev.title}</Link> <span className="muted">· {ev.category}</span>
+                        </span>
+                        <span className="row">
+                          <StatusBadge kind="event" status={ev.status} />
+                          <span className="muted">{formatDate(ev.date)}</span>
+                        </span>
+                      </li>
                     ))}
                   </ul>
                 ) : (
@@ -130,12 +141,58 @@ export default function OrganizationProfilePage() {
             </>
           )}
 
+          <ReviewsSection target={{ organization_id: org.id }} title="What volunteers say" onReviewAdded={() => reload({ silent: true })} />
+
           {!isOwn && (
             <ReportDialog open={reporting} onClose={() => setReporting(false)} targetType={REPORT_TARGETS.ORGANIZATION} targetId={org.id} targetLabel={org.name} />
           )}
-          {isOwn && <p className="muted"><Link to="/app/notifications">View notifications</Link></p>}
+          {isOwn && (
+            <VerificationDialog
+              open={askingVerification}
+              onClose={() => setAskingVerification(false)}
+              onSent={(updated) => {
+                setData(updated);
+                setAskingVerification(false);
+                setNotice("Verification requested. An admin will review your organization.");
+              }}
+            />
+          )}
         </div>
       )}
     </QueryState>
+  );
+}
+
+function VerificationDialog({ open, onClose, onSent }) {
+  const [form, setForm] = useState({ registration_number: "", note: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      onSent(await requestVerification({ registration_number: form.registration_number.trim(), note: form.note.trim() }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Request verification">
+      <form className="stack" onSubmit={submit} noValidate>
+        <p className="muted">These details are private. Only platform admins can see them.</p>
+        <Alert type="error">{error}</Alert>
+        <FormField label="Registration number (NGO / trust / society)" maxLength={50} value={form.registration_number} onChange={(e) => setForm((f) => ({ ...f, registration_number: e.target.value }))} />
+        <FormField as="textarea" rows={4} label="Anything the admin should know" maxLength={1000} value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} />
+        <div className="row row--end">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" loading={loading}>Send request</Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

@@ -1,4 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+
+// Loads data when the component mounts (or deps change).
+// const { data, loading, error, reload, setData } = useApiData(() => api.getThing(id), [id]);
+// reload()                 -> fetch again and show the loading spinner
+// reload({ silent: true }) -> fetch again in the background (keeps the page on screen,
+//                             so success messages inside it are not lost)
 export function useApiData(fetcher, deps = []) {
   const [state, setState] = useState({ data: null, loading: true, error: null });
   const fetcherRef = useRef(fetcher);
@@ -19,8 +25,9 @@ export function useApiData(fetcher, deps = []) {
   useEffect(() => {
     load();
     return () => {
-      requestId.current += 1;
+      requestId.current += 1; // ignore results from stale requests
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   const setData = useCallback((updater) => {

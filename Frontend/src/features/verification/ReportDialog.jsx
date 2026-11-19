@@ -7,7 +7,7 @@ import { createReport } from "@/api/reportsApi";
 import { REPORT_REASONS } from "@/config/constants";
 
 // Reusable: <ReportDialog open onClose targetType="organization" targetId={id} targetLabel={name} />
-// Part B can reuse it for events with targetType="event".
+// Used for users, organizations and events (targetType="event").
 export default function ReportDialog({ open, onClose, targetType, targetId, targetLabel }) {
   const [reason, setReason] = useState("");
   const [details, setDetails] = useState("");

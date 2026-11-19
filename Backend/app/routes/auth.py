@@ -1,31 +1,51 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+
+from fastapi import APIRouter, HTTPException, Request, status
 from pymongo.errors import DuplicateKeyError
 
-from app.auth import get_current_user
-from app.database import get_db
-from app.schemas import LoginRequest, RegisterRequest
+from app.schemas import (
+    RegisterRequest,
+    LoginRequest,
+    UserResponse,
+    TokenResponse,
+)
 from app.security import create_access_token
-from app.services.auth_service import authenticate_user, register_user
-from app.utils.serializers import user_to_dict
+from app.services.auth_service import (
+    register_user,
+    authenticate_user,
+    serialize_user,
+)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
-def register(data: RegisterRequest):
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def register(data: RegisterRequest, request: Request):
+    users = request.app.state.database.users
+
     try:
-        user = register_user(get_db(), data)
+        user = await register_user(users, data)
     except DuplicateKeyError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account with this email already exists.",
         )
-    return user_to_dict(user)
+
+    return serialize_user(user)
 
 
-@router.post("/login")
-def login(data: LoginRequest):
-    user = authenticate_user(get_db(), str(data.email), data.password)
+@router.post("/login", response_model=TokenResponse)
+async def login(data: LoginRequest, request: Request):
+    users = request.app.state.database.users
+
+    user = await authenticate_user(
+        users,
+        str(data.email),
+        data.password,
+    )
 
     if user is None:
         raise HTTPException(
@@ -34,10 +54,10 @@ def login(data: LoginRequest):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    token = create_access_token(str(user["_id"]), user["role"])
-    return {"access_token": token, "token_type": "bearer", "user": user_to_dict(user)}
+    token = create_access_token(str(user["_id"]))
 
-
-@router.get("/me")
-def me(user: dict = Depends(get_current_user)):
-    return user_to_dict(user)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": serialize_user(user),
+    }

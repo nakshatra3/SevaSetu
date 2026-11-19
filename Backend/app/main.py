@@ -41,6 +41,7 @@ for module in [
     auth,
     organizations,
     events,
+    categories,
     registrations,
     donations,
     reviews,

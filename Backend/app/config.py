@@ -3,7 +3,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-   
     APP_NAME: str = "SevaSetu API"
     MONGODB_URI: str = "mongodb://localhost:27017"
     MONGODB_DATABASE: str = "volunteer_platform"
@@ -11,6 +10,7 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = Field(min_length=32)
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
+
 
     CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
 

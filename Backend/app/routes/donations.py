@@ -74,6 +74,7 @@ def decide_donation(
     data: DonationDecision,
     user: dict = Depends(require_role("organization", "admin")),
 ):
+    """The receiving organization (or an admin) verifies or rejects a donation."""
     db = get_db()
     donation = db.donations.find_one({"_id": to_object_id(donation_id, "Donation")})
     if donation is None:
@@ -84,6 +85,7 @@ def decide_donation(
         if donation["organization_id"] != org["_id"]:
             raise forbidden("Only the receiving organization can verify this donation.")
 
+    # Only a pending donation can change. This also stops double point awards.
     changed = db.donations.update_one(
         {"_id": donation["_id"], "status": "pending"},
         {"$set": {"status": data.status, "decision_note": data.note.strip(), "decided_at": now(), "decided_by": user["_id"]}},

@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import database
 from app.config import settings
 from app.routes import (
+    admin,
+    attendance,
     auth,
     categories,
     donations,
@@ -14,8 +16,11 @@ from app.routes import (
     leaderboards,
     notifications,
     organizations,
+    recommendations,
     registrations,
+    reports,
     reviews,
+    volunteers,
 )
 
 
@@ -39,16 +44,19 @@ app.add_middleware(
 
 for module in [
     auth,
+    volunteers,
     organizations,
     events,
     categories,
     registrations,
+    attendance,
     donations,
     reviews,
     notifications,
     reports,
     gamification,
     leaderboards,
+    recommendations,
     admin,
 ]:
     app.include_router(module.router, prefix="/api/v1")

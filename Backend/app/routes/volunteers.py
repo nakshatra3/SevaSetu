@@ -1,3 +1,5 @@
+"""Feature 7: Volunteer profiles (skills, interests, availability, history, hours, badges)."""
+
 from fastapi import APIRouter, Depends
 
 from app.auth import get_current_user, require_role
@@ -19,6 +21,7 @@ def get_or_create_profile(db, user_id) -> dict:
 
 
 def volunteer_history(db, user_id) -> list:
+    """Verified activities (from attendance records), newest first."""
     records = list(db.attendance.find({"volunteer_id": user_id}).sort("checked_in_at", -1))
     events = {e["_id"]: e for e in db.events.find({"_id": {"$in": [r["event_id"] for r in records]}})}
     orgs = {o["_id"]: o for o in db.organizations.find({"_id": {"$in": [r["organization_id"] for r in records]}})}
@@ -45,6 +48,7 @@ def volunteer_history(db, user_id) -> list:
 
 
 def profile_to_dict(db, user: dict, private: bool) -> dict:
+    """private=True for the volunteer themself (adds phone, email, exact location)."""
     profile = get_or_create_profile(db, user["_id"])
     stats = get_volunteer_stats(db, user["_id"])
 

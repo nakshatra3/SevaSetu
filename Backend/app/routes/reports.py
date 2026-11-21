@@ -1,3 +1,5 @@
+"""Feature 16: Reporting users, organizations or events (admins review them)."""
+
 from fastapi import APIRouter, Depends, status
 
 from app.auth import get_current_user
@@ -10,6 +12,7 @@ router = APIRouter(prefix="/reports", tags=["Reports"])
 
 
 def target_label(db, target_type: str, target_id) -> str:
+    """Name of the reported thing, or None if it doesn't exist."""
     if target_type == "user":
         doc = db.users.find_one({"_id": target_id})
         return doc["name"] if doc else None

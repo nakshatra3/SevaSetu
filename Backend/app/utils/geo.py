@@ -1,10 +1,14 @@
+"""Location and time-slot helpers."""
+
 import math
 from datetime import datetime
 
+# The same labels are used on the volunteer profile form (frontend constants.js).
 TIME_SLOTS = ["Weekday mornings", "Weekday afternoons", "Weekday evenings", "Weekends"]
 
 
 def distance_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """Straight-line distance between two points on Earth (haversine formula)."""
     earth_radius_km = 6371.0
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     d_phi = math.radians(lat2 - lat1)
@@ -14,7 +18,8 @@ def distance_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 
 
 def time_slot_for(start: datetime) -> str:
-    if start.weekday() >= 5:
+    """Which availability slot an event falls in, based on its start time."""
+    if start.weekday() >= 5:  # 5 = Saturday, 6 = Sunday
         return "Weekends"
     if start.hour < 12:
         return "Weekday mornings"

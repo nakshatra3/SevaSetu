@@ -1,3 +1,9 @@
+"""Turn MongoDB documents into the JSON the frontend receives.
+
+These functions decide which fields are public. Secret fields such as
+password_hash, an event's check-in code, or an organization's private
+verification details are only included where we add them on purpose.
+"""
 
 from app.utils.helpers import now
 
@@ -16,6 +22,7 @@ def user_to_dict(user: dict) -> dict:
 
 
 def event_status(event: dict) -> str:
+    """cancelled / upcoming / ongoing / completed (worked out from the times)."""
     if event.get("status") == "cancelled":
         return "cancelled"
     current = now()
@@ -57,6 +64,7 @@ def event_to_dict(event: dict, organization: dict = None) -> dict:
 
 
 def organizations_by_id(db, events: list) -> dict:
+    """Load the organizations for a list of events with one query."""
     ids = list({event["organization_id"] for event in events})
     return {org["_id"]: org for org in db.organizations.find({"_id": {"$in": ids}})}
 
@@ -75,6 +83,7 @@ def organization_rating(db, organization_id) -> tuple:
 
 
 def organization_to_dict(db, org: dict, private: bool = False) -> dict:
+    """private=True for the owner and admins (adds verification details)."""
     rating_average, rating_count = organization_rating(db, org["_id"])
     attendance = list(db.attendance.find({"organization_id": org["_id"]}))
     events = list(

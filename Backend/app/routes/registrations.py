@@ -10,6 +10,7 @@ from app.utils.serializers import event_status, event_to_dict, organizations_by_
 
 router = APIRouter(tags=["Registrations"])
 
+
 @router.post("/events/{event_id}/register")
 def register_for_event(event_id: str, user: dict = Depends(require_role("volunteer"))):
     db = get_db()
@@ -30,7 +31,7 @@ def register_for_event(event_id: str, user: dict = Depends(require_role("volunte
         raise bad_request("Sorry, this event is full.")
 
     try:
-        if existing:
+        if existing:  # they cancelled earlier and are joining again
             db.registrations.update_one(
                 {"_id": existing["_id"]},
                 {"$set": {"status": "registered", "registered_at": now(), "cancelled_at": None}},
@@ -46,6 +47,7 @@ def register_for_event(event_id: str, user: dict = Depends(require_role("volunte
                 }
             )
     except DuplicateKeyError:
+        # Two clicks at the same moment: give the spot back.
         db.events.update_one({"_id": event["_id"]}, {"$inc": {"registered_count": -1}})
         raise conflict("You are already registered for this event.")
 
@@ -81,6 +83,7 @@ def cancel_registration(event_id: str, user: dict = Depends(require_role("volunt
     if changed.modified_count == 0:
         raise bad_request("You are not registered for this event.")
 
+    # Free the spot for someone else.
     db.events.update_one(
         {"_id": event["_id"], "registered_count": {"$gt": 0}},
         {"$inc": {"registered_count": -1}},
@@ -100,6 +103,7 @@ def my_registrations(
     scope: str = Query(default="all", pattern="^(upcoming|past|all)$"),
     user: dict = Depends(require_role("volunteer")),
 ):
+    """upcoming = still registered and the event hasn't ended; past = everything else."""
     db = get_db()
     registrations = list(db.registrations.find({"volunteer_id": user["_id"]}))
     events = {e["_id"]: e for e in db.events.find({"_id": {"$in": [r["event_id"] for r in registrations]}})}

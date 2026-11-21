@@ -36,7 +36,8 @@ def platform_stats(admin: dict = Depends(admin_only)):
     }
 
 
-# users
+# ---------- Users ----------
+
 @router.get("/users")
 def list_users(search: str = "", role: str = "", admin: dict = Depends(admin_only)):
     db = get_db()
@@ -63,7 +64,8 @@ def set_user_active(user_id: str, data: UserStatusUpdate, admin: dict = Depends(
     return user_to_dict(db.users.find_one({"_id": oid}))
 
 
-# orgs
+# ---------- Organizations and verification ----------
+
 @router.get("/organizations")
 def list_organizations(
     verification_status: str = Query(default="", pattern="^(|unverified|pending|verified|rejected)$"),
@@ -96,7 +98,7 @@ def decide_verification(org_id: str, data: VerificationDecision, admin: dict = D
     return organization_to_dict(db, db.organizations.find_one({"_id": org["_id"]}), private=True)
 
 
-#reports
+# ---------- Reports (moderation) ----------
 
 @router.get("/reports")
 def list_reports(
@@ -134,10 +136,11 @@ def decide_report(report_id: str, data: ReportDecision, admin: dict = Depends(ad
     return {"id": report_id, **update}
 
 
-# events
+# ---------- Events ----------
 
 @router.get("/events")
 def list_all_events(q: str = "", status: str = "", admin: dict = Depends(admin_only)):
+    """Every event, including past and cancelled ones."""
     db = get_db()
     query = {}
     if q.strip():

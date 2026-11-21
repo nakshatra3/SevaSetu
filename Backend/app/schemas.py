@@ -1,5 +1,3 @@
-
-
 from datetime import datetime
 from typing import Annotated, Literal, Optional
 
@@ -22,13 +20,14 @@ def validate_tags(values: list[str]) -> list[str]:
 
 TagList = Annotated[list[str], AfterValidator(validate_tags)]
 
-# auth
+
+# ---------- Auth ----------
 
 class RegisterRequest(BaseModel):
     name: str = Field(min_length=2, max_length=100)
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
-    role: Literal["volunteer", "organization"] 
+    role: Literal["volunteer", "organization"]  # admins are created by the seed script
     organization_name: Optional[str] = Field(default=None, min_length=2, max_length=150)
     referral_code: Optional[str] = Field(default=None, max_length=20)
 
@@ -47,6 +46,28 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=1, max_length=128)
 
+
+# --------------- Profiles ----------
+
+class VolunteerProfileUpdate(BaseModel):
+    city: str = Field(default="", max_length=80)
+    college: str = Field(default="", max_length=120)
+    phone: str = Field(default="", max_length=20, pattern=r"^[0-9+\- ]*$")
+    bio: str = Field(default="", max_length=500)
+    skills: TagList = []
+    interests: TagList = []
+    availability: list[str] = []
+    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
+    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
+
+
+    @field_validator("availability")
+    @classmethod
+    def check_availability(cls, values):
+        for value in values:
+            if value not in TIME_SLOTS:
+                raise ValueError(f"Unknown availability option: {value}")
+        return list(dict.fromkeys(values))
 
 
 class OrganizationUpdate(BaseModel):
@@ -79,7 +100,7 @@ class VerificationRequest(BaseModel):
     registration_number: str = Field(default="", max_length=50)
 
 
-
+# ---------- Events -------s---
 class EventCreate(BaseModel):
     title: str = Field(min_length=3, max_length=120)
     description: str = Field(min_length=10, max_length=2000)
@@ -109,7 +130,21 @@ class EventCreate(BaseModel):
         return self
 
 
-#  donation
+# ---------- Attendance ----------
+
+class CheckInRequest(BaseModel):
+    event_id: str
+    code: str = Field(min_length=4, max_length=12)
+
+
+class VerifyAttendanceRequest(BaseModel):
+    volunteer_id: str
+    # Optional: give fewer hours if the volunteer left early (never more than the event length).
+    hours: Optional[float] = Field(default=None, gt=0, le=12)
+    feedback: str = Field(default="", max_length=300)
+
+
+# ---------- Donations ----------
 
 class DonationCreate(BaseModel):
     organization_id: str
@@ -136,7 +171,7 @@ class DonationDecision(BaseModel):
     note: str = Field(default="", max_length=300)
 
 
-# reports
+# ---------- Reviews and reports    ----------
 
 class ReviewCreate(BaseModel):
     organization_id: Optional[str] = None
@@ -158,7 +193,7 @@ class ReportCreate(BaseModel):
     details: str = Field(default="", max_length=1000)
 
 
-# admin
+# ---------- Admin    ----------
 
 class UserStatusUpdate(BaseModel):
     is_active: bool

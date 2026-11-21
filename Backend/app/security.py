@@ -7,7 +7,6 @@ from app.config import settings
 
 password_hasher = PasswordHash.recommended()
 
-
 def hash_password(password: str) -> str:
     return password_hasher.hash(password)
 
@@ -30,6 +29,7 @@ def create_access_token(user_id: str, role: str) -> str:
 
 
 def decode_access_token(token: str) -> dict:
+    """Raises jwt.InvalidTokenError if the token is wrong or expired."""
     return jwt.decode(
         token,
         settings.JWT_SECRET_KEY,

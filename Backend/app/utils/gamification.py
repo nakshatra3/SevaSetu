@@ -1,3 +1,17 @@
+"""Points and badges.
+
+Rules (easy to explain in a demo):
+  * 10 points per verified volunteering hour.
+  * Verified money donation: 1 point per Rs 100 (max 50 points).
+  * Verified item donation (books, clothes, food): 2 points per item (max 30 points).
+  * Recruiting: 25 points when a volunteer you referred completes their FIRST
+    verified activity (so fake sign-ups earn nothing).
+
+Every award is saved in the `points_ledger` collection with a unique
+`source_key` (for example "attendance:<id>"). The unique index means the same
+action can never be paid twice.
+"""
+
 from pymongo.errors import DuplicateKeyError
 
 from app.utils.helpers import now
@@ -18,7 +32,10 @@ def calculate_donation_points(donation: dict) -> int:
 
 
 def award_points(db, user_id, points, kind, description, source_key, organization_id=None):
+    """Give points once. Returns True if awarded, False if already given.
 
+    After awarding, callers also run check_and_award_badges(db, user_id).
+    """
     if points <= 0:
         return False
     try:
@@ -26,7 +43,7 @@ def award_points(db, user_id, points, kind, description, source_key, organizatio
             {
                 "user_id": user_id,
                 "points": points,
-                "kind": kind, 
+                "kind": kind,  # attendance | donation | referral
                 "description": description,
                 "source_key": source_key,
                 "organization_id": organization_id,
@@ -43,7 +60,10 @@ def award_points(db, user_id, points, kind, description, source_key, organizatio
 
 
 def get_volunteer_stats(db, user_id) -> dict:
+    """All the numbers used for profiles, badges and leaderboards.
 
+    Hours always come from verified attendance records, never from user input.
+    """
     attendance = list(db.attendance.find({"volunteer_id": user_id}))
     category_counts = {}
     for record in attendance:
@@ -65,6 +85,7 @@ def get_volunteer_stats(db, user_id) -> dict:
 
 
 def badge_progress(badge: dict, stats: dict) -> float:
+    """How far the user is towards a badge (the number compared with the threshold)."""
     rule = badge["rule_type"]
     if rule == "hours":
         return stats["total_hours"]
@@ -86,6 +107,7 @@ def badge_progress(badge: dict, stats: dict) -> float:
 
 
 def check_and_award_badges(db, user_id) -> list:
+    """Give every badge the user now qualifies for. Each badge is given only once."""
     stats = get_volunteer_stats(db, user_id)
     earned_ids = {b["badge_id"] for b in db.user_badges.find({"user_id": user_id})}
     new_badges = []
@@ -113,6 +135,7 @@ def check_and_award_badges(db, user_id) -> list:
 
 
 def get_user_badges(db, user_id) -> list:
+    """Badges a user has earned, newest first."""
     result = []
     for earned in db.user_badges.find({"user_id": user_id}).sort("earned_at", -1):
         badge = db.badges.find_one({"_id": earned["badge_id"]})

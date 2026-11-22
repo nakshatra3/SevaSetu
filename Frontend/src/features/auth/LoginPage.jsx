@@ -9,29 +9,45 @@ import { validateEmail, hasErrors } from "@/utils/validators";
 
 export default function LoginPage() {
   useDocumentTitle("Log in");
+
   const { login, sessionExpired } = useAuth();
   const location = useLocation();
 
-  const [form, setForm] = useState({ email: location.state?.email || "", password: "" });
+  const [form, setForm] = useState({
+    email: location.state?.email || "",
+    password: "",
+  });
+
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  const update = (field) => (e) =>
+    setForm((f) => ({
+      ...f,
+      [field]: e.target.value,
+    }));
 
   const onSubmit = async (e) => {
     e.preventDefault();
+
     const nextErrors = {
       email: validateEmail(form.email),
       password: form.password ? "" : "Enter your password.",
     };
+
     setErrors(nextErrors);
     setSubmitError("");
+
     if (hasErrors(nextErrors)) return;
 
     setLoading(true);
+
     try {
-      await login({ email: form.email.trim(), password: form.password });
+      await login({
+        email: form.email.trim(),
+        password: form.password,
+      });
     } catch (err) {
       setSubmitError(err.message);
       setLoading(false);
@@ -40,22 +56,88 @@ export default function LoginPage() {
 
   return (
     <div className="auth__card">
-      <h1>Log in</h1>
-      <p className="muted">Welcome back. Enter your details to continue.</p>
+      <div className="login-header">
+        <h1>Log in</h1>
+        <Link
+          to="/"
+          className="login-home-btn"
+          title="Back to Homepage"
+          aria-label="Back to Homepage"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 10L12 3L21 10" />
+            <path d="M5 9V21H19V9" />
+            <path d="M9 21V14H15V21" />
+          </svg>
+        </Link>
 
-      <Alert type="success">{location.state?.notice}</Alert>
-      {sessionExpired && <Alert type="warning">Your session expired. Log in again to continue.</Alert>}
-      <Alert type="error">{submitError}</Alert>
+      </div>
+      <p className="muted">
+        Welcome back. Enter your details to continue.
+      </p>
 
-      <form onSubmit={onSubmit} noValidate className="stack">
-        <FormField label="Email" type="email" autoComplete="email" value={form.email} onChange={update("email")} error={errors.email} />
-        <FormField label="Password" type="password" autoComplete="current-password" value={form.password} onChange={update("password")} error={errors.password} />
-        <Button type="submit" loading={loading}>Log in</Button>
+      <Alert type="success">
+        {location.state?.notice}
+      </Alert>
+
+      {sessionExpired && (
+        <Alert type="warning">
+          Your session expired. Log in again to continue.
+        </Alert>
+      )}
+
+      <Alert type="error">
+        {submitError}
+      </Alert>
+
+      <form
+        onSubmit={onSubmit}
+        noValidate
+        className="stack"
+      >
+        <FormField
+          label="Email"
+          type="email"
+          autoComplete="email"
+          value={form.email}
+          onChange={update("email")}
+          error={errors.email}
+        />
+        <FormField
+          label="Password"
+          type="password"
+          autoComplete="current-password"
+          value={form.password}
+          onChange={update("password")}
+          error={errors.password}
+        />
+
+        <Button
+          type="submit"
+          loading={loading}
+        >
+          Log in
+        </Button>
+
       </form>
 
       <p className="auth__alt">
-        New to SevaSetu? <Link to="/register">Create an account</Link>
+        New to SevaSetu?{" "}
+        <Link to="/register">
+          Create an account
+        </Link>
       </p>
+
     </div>
   );
 }

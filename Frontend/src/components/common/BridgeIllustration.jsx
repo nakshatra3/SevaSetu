@@ -1,4 +1,3 @@
-// "Setu" means bridge: people on one bank, causes on the other.
 export default function BridgeIllustration() {
   return (
     <svg className="bridge" viewBox="0 0 480 260" role="img" aria-label="A bridge connecting two river banks at sunrise">

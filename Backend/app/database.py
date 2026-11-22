@@ -1,22 +1,67 @@
 
-from pymongo import AsyncMongoClient
+
+from pymongo import ASCENDING, DESCENDING, MongoClient
 
 from app.config import settings
 
+client = None
+db = None
 
-client = AsyncMongoClient(settings.MONGODB_URI)
-database = client[settings.MONGODB_DATABASE]
+
+def connect_to_mongo():
+    global client, db
+    client = MongoClient(settings.MONGODB_URI, serverSelectionTimeoutMS=5000)
+    client.admin.command("ping")  # fails fast with a clear error if MongoDB is not running
+    db = client[settings.MONGODB_DATABASE]
+    setup_database(db)
 
 
-async def connect_database():
-    await client.admin.command("ping")
+def close_mongo():
+    if client is not None:
+        client.close()
 
-    await database.users.create_index(
-        "email",
-        unique=True,
-        name="unique_user_email",
+
+def get_db():
+    if db is None:
+        raise RuntimeError("Database is not connected. Is MongoDB running?")
+    return db
+
+
+def setup_database(database):
+    create_indexes(database)
+
+    from app.utils.defaults import ensure_default_data
+
+    ensure_default_data(database)
+
+
+def create_indexes(database):
+    database.users.create_index("email", unique=True, name="unique_user_email")
+    database.users.create_index("referral_code", unique=True, sparse=True)
+    database.volunteer_profiles.create_index("user_id", unique=True)
+    database.organizations.create_index("user_id", unique=True)
+
+    database.events.create_index([("start_time", ASCENDING)])
+    database.events.create_index("organization_id")
+
+    database.registrations.create_index(
+        [("event_id", ASCENDING), ("volunteer_id", ASCENDING)], unique=True
+    )
+    database.attendance.create_index(
+        [("event_id", ASCENDING), ("volunteer_id", ASCENDING)], unique=True
     )
 
+    database.points_ledger.create_index("source_key", unique=True)
+    database.points_ledger.create_index("user_id")
+    database.user_badges.create_index(
+        [("user_id", ASCENDING), ("badge_id", ASCENDING)], unique=True
+    )
+    database.badges.create_index("code", unique=True)
+    database.categories.create_index("name", unique=True)
 
-async def close_database():
-    await client.close()
+    database.reviews.create_index(
+        [("reviewer_id", ASCENDING), ("organization_id", ASCENDING), ("event_id", ASCENDING)],
+        unique=True,
+    )
+    database.notifications.create_index([("user_id", ASCENDING), ("created_at", DESCENDING)])
+    database.notifications.create_index("dedupe_key", unique=True, sparse=True)

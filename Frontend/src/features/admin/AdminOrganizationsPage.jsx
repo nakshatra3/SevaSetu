@@ -17,6 +17,7 @@ export default function AdminOrganizationsPage() {
   const [status, setStatus] = useState(VERIFICATION_STATUS.PENDING);
   const [busyId, setBusyId] = useState(null);
   const [actionError, setActionError] = useState("");
+  const [notes, setNotes] = useState({});
 
   const { data, loading, error, reload, setData } = useApiData(() => listOrganizations({ verification_status: status }), [status]);
 
@@ -24,8 +25,7 @@ export default function AdminOrganizationsPage() {
     setBusyId(org.id);
     setActionError("");
     try {
-      await reviewOrganization(org.id, decision);
-      // Remove from the list if it no longer matches the current filter.
+      await reviewOrganization(org.id, decision, notes[org.id] || "");
       setData((prev) => (status ? prev.filter((o) => o.id !== org.id) : prev.map((o) => (o.id === org.id ? { ...o, verification_status: decision } : o))));
     } catch (err) {
       setActionError(err.message);
@@ -57,8 +57,18 @@ export default function AdminOrganizationsPage() {
                     <VerificationBadge status={org.verification_status} />
                   </div>
                   <p className="muted">{[org.city, org.contact_email].filter(Boolean).join(" · ")}</p>
-                  {org.verification_note && <p>{org.verification_note}</p>}
+                  {org.verification_request && (
+                    <div className="private-box">
+                      <small className="muted">Private verification details</small>
+                      <p>Registration no.: <strong>{org.verification_request.registration_number || "-"}</strong></p>
+                      {org.verification_request.note && <p>{org.verification_request.note}</p>}
+                    </div>
+                  )}
+                  {org.verification_note && <p className="muted">Admin note: {org.verification_note}</p>}
                 </div>
+                {org.verification_status === VERIFICATION_STATUS.PENDING && (
+                  <FormField label="Note to the organization (optional)" value={notes[org.id] || ""} onChange={(e) => setNotes((n) => ({ ...n, [org.id]: e.target.value }))} />
+                )}
                 {org.verification_status === VERIFICATION_STATUS.PENDING && (
                   <div className="row">
                     <Button size="sm" loading={busyId === org.id} onClick={() => review(org, VERIFICATION_STATUS.VERIFIED)}>Verify</Button>

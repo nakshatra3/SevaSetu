@@ -1,9 +1,5 @@
 import { useId } from "react";
 
-// One component for input, textarea and select.
-//   <FormField label="Email" type="email" value={v} onChange={...} error={err} />
-//   <FormField as="textarea" label="Bio" ... />
-//   <FormField as="select" label="Role" ...><option>..</option></FormField>
 export default function FormField({ as = "input", label, hint, error, className = "", children, ...props }) {
   const id = useId();
   const Control = as;

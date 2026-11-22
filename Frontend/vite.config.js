@@ -4,8 +4,6 @@ import path from "node:path";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  // In development, requests to /api/* are forwarded to the FastAPI server.
-  // This avoids CORS problems while you work locally.
   const backend = env.VITE_API_PROXY_TARGET || "http://localhost:8000";
 
   return {

@@ -31,7 +31,6 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      // On success AuthContext updates and GuestRoute redirects to the right dashboard.
       await login({ email: form.email.trim(), password: form.password });
     } catch (err) {
       setSubmitError(err.message);
